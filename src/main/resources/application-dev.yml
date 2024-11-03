@@ -1,0 +1,7 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://192.168.50.151:5432/auth-server
+    username: postgres
+    password: postgres
+  flyway:
+    locations: classpath:db/migrations,classpath:db/migrations-dev
