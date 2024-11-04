@@ -1,5 +1,10 @@
+application:
+  security:
+    oauth:
+      registrar-client-secret: ${REGISTRAR_CLIENT_SECRET}
 server:
   port: 9000
+  forward-headers-strategy: NATIVE
 spring:
   application:
     name: auth-server

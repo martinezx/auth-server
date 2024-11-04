@@ -13,8 +13,18 @@ java {
 	}
 }
 
+jar{
+	archiveFileName.set("app.jar")
+}
+
 repositories {
-	mavenCentral()
+	maven {
+		url "https://artifactory.home.xmdf.live/repository/maven-central/"
+		credentials {
+			username artifactoyrUser
+			password artifactoryPassword
+		}
+	}
 }
 
 dependencies {

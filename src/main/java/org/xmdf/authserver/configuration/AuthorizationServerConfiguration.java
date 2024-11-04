@@ -1,11 +1,10 @@
 package org.xmdf.authserver.configuration;
 
-import static org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer.*;
-
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -15,7 +14,6 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
-import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
@@ -34,6 +32,11 @@ import java.util.UUID;
 
 @Configuration
 public class AuthorizationServerConfiguration {
+
+    public static final String OAUTH_REGISTRAR_CLIENT_ID = "registrar-client";
+
+    @Value("${application.security.oauth.registrar-client-secret}")
+    private String registrarClientSecret;
 
     @Bean
     @Order(1)
@@ -63,12 +66,12 @@ public class AuthorizationServerConfiguration {
     public RegisteredClientRepository registeredClientRepository(JdbcTemplate jdbcTemplate) {
         RegisteredClientRepository repository = new JdbcRegisteredClientRepository(jdbcTemplate);
 
-        RegisteredClient registrarClient = repository.findByClientId("registrar-client");
+        RegisteredClient registrarClient = repository.findByClientId(OAUTH_REGISTRAR_CLIENT_ID);
 
         if (registrarClient == null) {
             repository.save(RegisteredClient.withId(UUID.randomUUID().toString())
-                    .clientId("registrar-client")
-                    .clientSecret("{noop}secret")
+                    .clientId(OAUTH_REGISTRAR_CLIENT_ID)
+                    .clientSecret(registrarClientSecret)
                     .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                     .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
                     .scope("client.create")
