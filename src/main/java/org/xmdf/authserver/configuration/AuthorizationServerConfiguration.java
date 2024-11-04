@@ -12,6 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -63,7 +64,7 @@ public class AuthorizationServerConfiguration {
     }
 
     @Bean
-    public RegisteredClientRepository registeredClientRepository(JdbcTemplate jdbcTemplate) {
+    public RegisteredClientRepository registeredClientRepository(JdbcTemplate jdbcTemplate, PasswordEncoder passwordEncoder) {
         RegisteredClientRepository repository = new JdbcRegisteredClientRepository(jdbcTemplate);
 
         RegisteredClient registrarClient = repository.findByClientId(OAUTH_REGISTRAR_CLIENT_ID);
@@ -71,7 +72,7 @@ public class AuthorizationServerConfiguration {
         if (registrarClient == null) {
             repository.save(RegisteredClient.withId(UUID.randomUUID().toString())
                     .clientId(OAUTH_REGISTRAR_CLIENT_ID)
-                    .clientSecret(registrarClientSecret)
+                    .clientSecret(passwordEncoder.encode(registrarClientSecret))
                     .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                     .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
                     .scope("client.create")
