@@ -9,16 +9,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.MediaType;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationConsentService;
-import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
-import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
@@ -28,7 +26,14 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 import org.xmdf.authserver.jose.Jwks;
+import org.xmdf.authserver.repository.OAuthAuthorizationConsentRepository;
+import org.xmdf.authserver.repository.OAuthAuthorizationRepository;
+import org.xmdf.authserver.repository.OAuthClientRepository;
+import org.xmdf.authserver.service.OAuthAuthorizationConsentService;
+import org.xmdf.authserver.service.OAuthAuthorizationService;
+import org.xmdf.authserver.service.OAuthClientService;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Configuration
@@ -43,10 +48,8 @@ public class AuthorizationServerConfiguration {
     @Order(1)
     public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
         OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
-
         http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
                 .oidc(oidc -> oidc.clientRegistrationEndpoint(Customizer.withDefaults()));
-
         http
                 // Redirect to the login page when not authenticated from the
                 // authorization endpoint
@@ -64,8 +67,8 @@ public class AuthorizationServerConfiguration {
     }
 
     @Bean
-    public RegisteredClientRepository registeredClientRepository(JdbcTemplate jdbcTemplate, PasswordEncoder passwordEncoder) {
-        RegisteredClientRepository repository = new JdbcRegisteredClientRepository(jdbcTemplate);
+    public RegisteredClientRepository registeredClientRepository(OAuthClientRepository clientRepository, PasswordEncoder passwordEncoder) {
+        RegisteredClientRepository repository = new OAuthClientService(clientRepository);
 
         RegisteredClient registrarClient = repository.findByClientId(OAUTH_REGISTRAR_CLIENT_ID);
 
@@ -77,23 +80,24 @@ public class AuthorizationServerConfiguration {
                     .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
                     .scope("client.create")
                     .scope("client.read")
+                    .clientIdIssuedAt(Instant.now())
                     .build());
         }
         return repository;
     }
 
     @Bean
-    public JdbcOAuth2AuthorizationService authorizationService(
-            JdbcTemplate jdbcTemplate,
+    public OAuth2AuthorizationService authorizationService(
+            OAuthAuthorizationRepository authorizationRepository,
             RegisteredClientRepository registeredClientRepository) {
-        return new JdbcOAuth2AuthorizationService(jdbcTemplate, registeredClientRepository);
+        return new OAuthAuthorizationService(authorizationRepository, registeredClientRepository);
     }
 
     @Bean
-    public JdbcOAuth2AuthorizationConsentService authorizationConsentService(
-            JdbcTemplate jdbcTemplate,
+    public OAuth2AuthorizationConsentService authorizationConsentService(
+            OAuthAuthorizationConsentRepository authorizationConsentRepository,
             RegisteredClientRepository registeredClientRepository) {
-        return new JdbcOAuth2AuthorizationConsentService(jdbcTemplate, registeredClientRepository);
+        return new OAuthAuthorizationConsentService(authorizationConsentRepository, registeredClientRepository);
     }
 
     @Bean

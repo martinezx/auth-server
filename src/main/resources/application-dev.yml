@@ -9,3 +9,6 @@ spring:
     password: postgres
   flyway:
     locations: classpath:db/migrations,classpath:db/migrations-dev
+logging:
+  level:
+    org.springframework.security: TRACE

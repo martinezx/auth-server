@@ -1,10 +1,10 @@
-INSERT INTO public.oauth2_registered_client (id, client_id, client_id_issued_at, client_secret,
-                                             client_secret_expires_at, client_name,
-                                             client_authentication_methods, authorization_grant_types, redirect_uris,
-                                             post_logout_redirect_uris, scopes,
-                                             client_settings, token_settings)
+INSERT INTO public.oauth2_client (id, client_id, client_id_issued_at, client_secret,
+                                  client_secret_expires_at, client_name,
+                                  client_authentication_methods, authorization_grant_types, redirect_uris,
+                                  post_logout_redirect_uris, scopes,
+                                  client_settings, token_settings)
 VALUES ('1bb27ddb-5d3a-4492-bf2e-d37a71fa0f9e', 'oidc-client', CURRENT_TIMESTAMP,
-        '$2a$10$0HP.FlC2DUveTIWB3qTPo.hw.dbiRL694BxTruwCYSQG0x6rrNN5S', null,
+        '{bcrypt}$2a$10$0HP.FlC2DUveTIWB3qTPo.hw.dbiRL694BxTruwCYSQG0x6rrNN5S', null,
         '1bb27ddb-5d3a-4492-bf2e-d37a71fa0f9e', 'client_secret_basic', 'refresh_token,authorization_code',
         'https://oauthdebugger.com/debug', 'http://127.0.0.1:9000/', 'openid,profile',
         '{"@class":"java.util.Collections$UnmodifiableMap","settings.client.require-proof-key":false,"settings.client.require-authorization-consent":false}',
