@@ -18,6 +18,3 @@ spring:
       ddl-auto: none
   flyway:
     locations: classpath:db/migrations
-logging:
-  level:
-    org.springframework.security: ERROR

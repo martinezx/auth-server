@@ -4,9 +4,15 @@ application:
       registrar-client-secret: secret
 spring:
   datasource:
-    url: jdbc:postgresql://192.168.50.151:5432/auth-server
-    username: postgres
-    password: postgres
+    url: jdbc:h2:mem:homelab_inventory;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;AUTO_RECONNECT=TRUE;MODE=PostgreSQL
+    username: sa
+    password: password
+    driver-class-name: org.h2.Driver
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
   flyway:
     locations: classpath:db/migrations,classpath:db/migrations-dev
 logging:
