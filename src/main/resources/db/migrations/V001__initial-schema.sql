@@ -1,13 +1,13 @@
 CREATE TABLE _user (
-   id       uuid DEFAULT gen_random_uuid()  PRIMARY KEY,
-   username varchar(100)                    NOT NULL UNIQUE,
-   password varchar(100)                    NOT NULL,
+   id       uuid            PRIMARY KEY,
+   username varchar(100)    NOT NULL UNIQUE,
+   password varchar(100)    NOT NULL,
    enabled  boolean
 );
 
 CREATE TABLE _role (
-   id   uuid DEFAULT    gen_random_uuid()   PRIMARY KEY,
-   name varchar(100)
+   id   uuid            PRIMARY KEY,
+   name varchar(100)    NOT NULL UNIQUE
 );
 
 CREATE TABLE _user_role (

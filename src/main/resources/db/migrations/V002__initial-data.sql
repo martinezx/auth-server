@@ -1,2 +1,2 @@
-INSERT INTO _role (id, name)
-VALUES ('cd992bd5-f7fc-47ce-bbbb-f089baee1757', 'ADMIN');
+INSERT INTO _role (id, name) VALUES (gen_random_uuid(), 'USER');
+INSERT INTO _role (id, name) VALUES (gen_random_uuid(), 'ADMIN');

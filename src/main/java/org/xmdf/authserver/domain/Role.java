@@ -1,18 +1,16 @@
 package org.xmdf.authserver.domain;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 
 import java.util.UUID;
 
+import static lombok.EqualsAndHashCode.Include;
+
 @Data
 @Builder
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity(name = "role")
@@ -20,7 +18,9 @@ import java.util.UUID;
 public class Role implements GrantedAuthority {
 
     @Id
+    @Include
     private UUID id;
+    @Column(unique = true, length = 100)
     private String name;
 
     @Override
