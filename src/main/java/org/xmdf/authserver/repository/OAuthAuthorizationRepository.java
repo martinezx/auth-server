@@ -6,9 +6,8 @@ import org.springframework.data.repository.query.Param;
 import org.xmdf.authserver.domain.OAuthAuthorization;
 
 import java.util.Optional;
-import java.util.UUID;
 
-public interface OAuthAuthorizationRepository extends JpaRepository<OAuthAuthorization, UUID> {
+public interface OAuthAuthorizationRepository extends JpaRepository<OAuthAuthorization, String> {
 
     Optional<OAuthAuthorization> findByState(String state);
 

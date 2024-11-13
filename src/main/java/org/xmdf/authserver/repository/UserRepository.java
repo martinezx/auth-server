@@ -16,5 +16,8 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     boolean existsByUsername(String username);
 
     @Query("select r from role r")
-    List<Role> getAllRoles();
+    List<Role> findAllRoles();
+
+    @Query("select r from role r where r.name = :name")
+    Optional<Role> findRoleByName(String name);
 }

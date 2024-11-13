@@ -16,12 +16,13 @@ import org.springframework.util.StringUtils;
 import org.xmdf.authserver.domain.OAuthClient;
 import org.xmdf.authserver.repository.OAuthClientRepository;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
 public class OAuthClientService implements RegisteredClientRepository {
 
     private final OAuthClientRepository clientRepository;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
     public OAuthClientService(OAuthClientRepository clientRepository) {
         Assert.notNull(clientRepository, "clientRepository cannot be null");
@@ -29,6 +30,7 @@ public class OAuthClientService implements RegisteredClientRepository {
 
         ClassLoader classLoader = OAuthClientService.class.getClassLoader();
         List<Module> securityModules = SecurityJackson2Modules.getModules(classLoader);
+        this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModules(securityModules);
         this.objectMapper.registerModule(new OAuth2AuthorizationServerJackson2Module());
     }
@@ -64,7 +66,7 @@ public class OAuthClientService implements RegisteredClientRepository {
     @Override
     public RegisteredClient findById(String id) {
         Assert.notNull(id, "id cannot be empty");
-        return this.clientRepository.findById(UUID.fromString(id)).map(this::toObject).orElse(null);
+        return this.clientRepository.findById(id).map(this::toObject).orElse(null);
     }
 
     @Override
@@ -74,21 +76,21 @@ public class OAuthClientService implements RegisteredClientRepository {
     }
 
     private RegisteredClient toObject(OAuthClient client) {
-        Set<String> clientAuthenticationMethods = StringUtils.commaDelimitedListToSet(
+        var clientAuthenticationMethods = StringUtils.commaDelimitedListToSet(
                 client.getClientAuthenticationMethods());
-        Set<String> authorizationGrantTypes = StringUtils.commaDelimitedListToSet(
+        var authorizationGrantTypes = StringUtils.commaDelimitedListToSet(
                 client.getAuthorizationGrantTypes());
-        Set<String> redirectUris = StringUtils.commaDelimitedListToSet(
+        var redirectUris = StringUtils.commaDelimitedListToSet(
                 client.getRedirectUris());
-        Set<String> postLogoutRedirectUris = StringUtils.commaDelimitedListToSet(
+        var postLogoutRedirectUris = StringUtils.commaDelimitedListToSet(
                 client.getPostLogoutRedirectUris());
-        Set<String> clientScopes = StringUtils.commaDelimitedListToSet(
+        var clientScopes = StringUtils.commaDelimitedListToSet(
                 client.getScopes());
 
-        Map<String, Object> clientSettingsMap = parseMap(client.getClientSettings());
-        Map<String, Object> tokenSettingsMap = parseMap(client.getTokenSettings());
+        var clientSettingsMap = parseMap(client.getClientSettings());
+        var tokenSettingsMap = parseMap(client.getTokenSettings());
 
-        return RegisteredClient.withId(client.getId().toString())
+        return RegisteredClient.withId(client.getId())
                 .clientId(client.getClientId())
                 .clientIdIssuedAt(client.getClientIdIssuedAt())
                 .clientSecret(client.getClientSecret())
@@ -109,16 +111,14 @@ public class OAuthClientService implements RegisteredClientRepository {
     }
 
     private OAuthClient toEntity(RegisteredClient registeredClient) {
-        List<String> clientAuthenticationMethods = new ArrayList<>(registeredClient.getClientAuthenticationMethods().size());
-        registeredClient.getClientAuthenticationMethods().forEach(clientAuthenticationMethod ->
-                clientAuthenticationMethods.add(clientAuthenticationMethod.getValue()));
+        var clientAuthenticationMethods = registeredClient.getClientAuthenticationMethods().stream()
+                .map(ClientAuthenticationMethod::getValue).toList();
 
-        List<String> authorizationGrantTypes = new ArrayList<>(registeredClient.getAuthorizationGrantTypes().size());
-        registeredClient.getAuthorizationGrantTypes().forEach(authorizationGrantType ->
-                authorizationGrantTypes.add(authorizationGrantType.getValue()));
+        var authorizationGrantTypes = registeredClient.getAuthorizationGrantTypes().stream()
+                .map(AuthorizationGrantType::getValue).toList();
 
         return OAuthClient.builder()
-                .id(UUID.fromString(registeredClient.getId()))
+                .id(registeredClient.getId())
                 .clientId(registeredClient.getClientId())
                 .clientIdIssuedAt(registeredClient.getClientIdIssuedAt())
                 .clientSecret(registeredClient.getClientSecret())

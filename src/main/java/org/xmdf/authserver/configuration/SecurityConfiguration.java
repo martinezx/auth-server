@@ -1,5 +1,7 @@
 package org.xmdf.authserver.configuration;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -14,8 +16,12 @@ import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.xmdf.authserver.domain.Role;
+import org.xmdf.authserver.domain.User;
 import org.xmdf.authserver.repository.UserRepository;
 import org.xmdf.authserver.service.UserService;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -34,8 +40,29 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public UserDetailsManager userDetailsManager(UserRepository userRepository, AuthenticationManager authenticationManager) {
-        return new UserService(userRepository, authenticationManager);
+    public ApplicationRunner initializeUsers(UserService userService,
+                                             @Value("${app.oidc.user.admin-user.username}") String adminUsername,
+                                             @Value("${app.oidc.user.admin-user.password}") String adminPassword) {
+
+        return (args) -> {
+            Role adminRole = userService.loadRoleByName("ADMIN");
+            if (!userService.userExists(adminUsername)) {
+                userService.createUser(User.builder()
+                        .username(adminUsername)
+                        .password(adminPassword)
+                        .authorities(List.of(adminRole))
+                        .enabled(true)
+                        .build());
+            }
+        };
+    }
+
+    @Bean
+    public UserService userService(
+            UserRepository userRepository,
+            AuthenticationManager authenticationManager,
+            PasswordEncoder passwordEncoder) {
+        return new UserService(userRepository, authenticationManager, passwordEncoder);
     }
 
     @Bean
@@ -44,10 +71,12 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public AuthenticationProvider authProvider(UserDetailsManager userDetailsManager) {
+    public AuthenticationProvider authProvider(
+            UserDetailsManager userDetailsManager,
+            PasswordEncoder passwordEncoder) {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
         authProvider.setUserDetailsService(userDetailsManager);
-        authProvider.setPasswordEncoder(passwordEncoder());
+        authProvider.setPasswordEncoder(passwordEncoder);
         return authProvider;
     }
 

@@ -5,26 +5,23 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsent;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
-import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import org.xmdf.authserver.domain.OAuthAuthorizationConsent;
 import org.xmdf.authserver.repository.OAuthAuthorizationConsentRepository;
 
-import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class OAuthAuthorizationConsentService implements OAuth2AuthorizationConsentService {
     private final OAuthAuthorizationConsentRepository authorizationConsentRepository;
-    private final RegisteredClientRepository registeredClientRepository;
+    private final RegisteredClientRepository oAuthClientService;
 
-    public OAuthAuthorizationConsentService(OAuthAuthorizationConsentRepository authorizationConsentRepository, RegisteredClientRepository registeredClientRepository) {
+    public OAuthAuthorizationConsentService(OAuthAuthorizationConsentRepository authorizationConsentRepository, RegisteredClientRepository oAuthClientService) {
         Assert.notNull(authorizationConsentRepository, "authorizationConsentRepository cannot be null");
-        Assert.notNull(registeredClientRepository, "registeredClientRepository cannot be null");
+        Assert.notNull(oAuthClientService, "registeredClientRepository cannot be null");
         this.authorizationConsentRepository = authorizationConsentRepository;
-        this.registeredClientRepository = registeredClientRepository;
+        this.oAuthClientService = oAuthClientService;
     }
 
     @Override
@@ -37,7 +34,7 @@ public class OAuthAuthorizationConsentService implements OAuth2AuthorizationCons
     public void remove(OAuth2AuthorizationConsent authorizationConsent) {
         Assert.notNull(authorizationConsent, "authorizationConsent cannot be null");
         this.authorizationConsentRepository.deleteByRegisteredClientIdAndPrincipalName(
-                UUID.fromString(authorizationConsent.getRegisteredClientId()), authorizationConsent.getPrincipalName());
+                authorizationConsent.getRegisteredClientId(), authorizationConsent.getPrincipalName());
     }
 
     @Override
@@ -45,22 +42,24 @@ public class OAuthAuthorizationConsentService implements OAuth2AuthorizationCons
         Assert.hasText(registeredClientId, "registeredClientId cannot be empty");
         Assert.hasText(principalName, "principalName cannot be empty");
         return this.authorizationConsentRepository.findByRegisteredClientIdAndPrincipalName(
-                UUID.fromString(registeredClientId), principalName).map(this::toObject).orElse(null);
+                registeredClientId, principalName).map(this::toObject).orElse(null);
     }
 
     private OAuth2AuthorizationConsent toObject(OAuthAuthorizationConsent authorizationConsent) {
-        String registeredClientId = authorizationConsent.getRegisteredClientId().toString();
-        RegisteredClient registeredClient = this.registeredClientRepository.findById(registeredClientId);
+        var registeredClientId = authorizationConsent.getRegisteredClientId();
+        var registeredClient = this.oAuthClientService.findById(registeredClientId);
+
         if (registeredClient == null) {
             throw new DataRetrievalFailureException(
-                    "The RegisteredClient with id '" + registeredClientId + "' was not found in the RegisteredClientRepository.");
+                    "The RegisteredClient with id '%s' was not found in the RegisteredClientRepository."
+                            .formatted(registeredClientId));
         }
 
-        OAuth2AuthorizationConsent.Builder builder = OAuth2AuthorizationConsent.withId(
+        var builder = OAuth2AuthorizationConsent.withId(
                 registeredClientId, authorizationConsent.getPrincipalName());
 
         if (authorizationConsent.getAuthorities() != null) {
-            for (String authority : StringUtils.commaDelimitedListToSet(authorizationConsent.getAuthorities())) {
+            for (var authority : StringUtils.commaDelimitedListToSet(authorizationConsent.getAuthorities())) {
                 builder.authority(new SimpleGrantedAuthority(authority));
             }
         }
@@ -69,12 +68,12 @@ public class OAuthAuthorizationConsentService implements OAuth2AuthorizationCons
     }
 
     private OAuthAuthorizationConsent toEntity(OAuth2AuthorizationConsent authorizationConsent) {
-        Set<String> authorities = authorizationConsent.getAuthorities().stream()
+        var authorities = authorizationConsent.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toSet());
 
         return OAuthAuthorizationConsent.builder()
-                .registeredClientId(UUID.fromString(authorizationConsent.getRegisteredClientId()))
+                .registeredClientId(authorizationConsent.getRegisteredClientId())
                 .principalName(authorizationConsent.getPrincipalName())
                 .authorities(StringUtils.collectionToCommaDelimitedString(authorities))
                 .build();

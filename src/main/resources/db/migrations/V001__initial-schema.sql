@@ -19,7 +19,7 @@ CREATE TABLE _user_role (
 );
 
 CREATE TABLE oauth2_client (
-    id                            uuid          DEFAULT gen_random_uuid()   PRIMARY KEY,
+    id                            varchar(255)                              PRIMARY KEY,
     client_id                     varchar(100)                              NOT NULL,
     client_id_issued_at           timestamp     DEFAULT CURRENT_TIMESTAMP   NOT NULL,
     client_secret                 varchar(200)  DEFAULT NULL,
@@ -35,10 +35,10 @@ CREATE TABLE oauth2_client (
 );
 
 CREATE TABLE oauth2_authorization (
-    id                              uuid          DEFAULT gen_random_uuid() PRIMARY KEY,
-    registered_client_id            uuid                                    NOT NULL,
-    principal_name                  varchar(200)                            NOT NULL,
-    authorization_grant_type        varchar(100)                            NOT NULL,
+    id                              varchar(255)                PRIMARY KEY,
+    registered_client_id            varchar(255)                NOT NULL,
+    principal_name                  varchar(200)                NOT NULL,
+    authorization_grant_type        varchar(100)                NOT NULL,
     authorized_scopes               varchar(1000) DEFAULT NULL,
     attributes                      text          DEFAULT NULL,
     state                           varchar(500)  DEFAULT NULL,
@@ -73,7 +73,7 @@ CREATE TABLE oauth2_authorization (
 );
 
 CREATE TABLE oauth2_authorization_consent (
-    registered_client_id    uuid            NOT NULL,
+    registered_client_id    varchar(255)    NOT NULL,
     principal_name          varchar(200)    NOT NULL,
     authorities             varchar(1000)   NOT NULL,
     PRIMARY KEY (registered_client_id, principal_name),

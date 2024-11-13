@@ -36,7 +36,7 @@ dependencies {
 	compileOnly("org.projectlombok:lombok:1.18.34")
 	annotationProcessor("org.projectlombok:lombok:1.18.34")
 
-	developmentOnly("com.h2database:h2:2.2.224")
+	developmentOnly("com.h2database:h2:2.3.232")
 
 	implementation("org.springframework.boot:spring-boot-starter-oauth2-authorization-server")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")

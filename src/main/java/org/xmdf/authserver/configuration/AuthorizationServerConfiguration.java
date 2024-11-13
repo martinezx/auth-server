@@ -5,6 +5,7 @@ import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -39,11 +40,6 @@ import java.util.UUID;
 @Configuration
 public class AuthorizationServerConfiguration {
 
-    public static final String OAUTH_REGISTRAR_CLIENT_ID = "registrar-client";
-
-    @Value("${application.security.oauth.registrar-client-secret}")
-    private String registrarClientSecret;
-
     @Bean
     @Order(1)
     public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
@@ -67,23 +63,43 @@ public class AuthorizationServerConfiguration {
     }
 
     @Bean
-    public RegisteredClientRepository registeredClientRepository(OAuthClientRepository clientRepository, PasswordEncoder passwordEncoder) {
-        RegisteredClientRepository repository = new OAuthClientService(clientRepository);
+    public ApplicationRunner initializeClients(
+            RegisteredClientRepository registeredClientRepository,
+            PasswordEncoder passwordEncoder,
+            @Value("${app.oauth2.client.registrar-client.id}") String registrarClientId,
+            @Value("${app.oauth2.client.registrar-client.secret}") String registrarClientSecret,
+            @Value("${app.oauth2.client.oidc-client.id}") String oidcClientId,
+            @Value("${app.oauth2.client.oidc-client.secret}") String oidcClientSecret) {
 
-        RegisteredClient registrarClient = repository.findByClientId(OAUTH_REGISTRAR_CLIENT_ID);
+        return (args) -> {
+            if (registeredClientRepository.findByClientId(registrarClientId) == null) {
+                registeredClientRepository.save(RegisteredClient.withId(UUID.randomUUID().toString())
+                        .clientId(registrarClientId)
+                        .clientSecret(passwordEncoder.encode(registrarClientSecret))
+                        .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+                        .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+                        .scope("client.create")
+                        .scope("client.read")
+                        .clientIdIssuedAt(Instant.now())
+                        .build());
+            }
+            if (registeredClientRepository.findByClientId(oidcClientId) == null) {
+                registeredClientRepository.save(RegisteredClient.withId(UUID.randomUUID().toString())
+                        .clientId(oidcClientId)
+                        .clientSecret(passwordEncoder.encode(oidcClientSecret))
+                        .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+                        .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+                        .scope("client.create")
+                        .scope("client.read")
+                        .clientIdIssuedAt(Instant.now())
+                        .build());
+            }
+        };
+    }
 
-        if (registrarClient == null) {
-            repository.save(RegisteredClient.withId(UUID.randomUUID().toString())
-                    .clientId(OAUTH_REGISTRAR_CLIENT_ID)
-                    .clientSecret(passwordEncoder.encode(registrarClientSecret))
-                    .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-                    .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-                    .scope("client.create")
-                    .scope("client.read")
-                    .clientIdIssuedAt(Instant.now())
-                    .build());
-        }
-        return repository;
+    @Bean
+    public RegisteredClientRepository registeredClientRepository(OAuthClientRepository clientRepository) {
+        return new OAuthClientService(clientRepository);
     }
 
     @Bean

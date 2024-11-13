@@ -5,10 +5,9 @@ import org.springframework.stereotype.Repository;
 import org.xmdf.authserver.domain.OAuthClient;
 
 import java.util.Optional;
-import java.util.UUID;
 
 @Repository
-public interface OAuthClientRepository extends JpaRepository<OAuthClient, UUID> {
+public interface OAuthClientRepository extends JpaRepository<OAuthClient, String> {
 
     Optional<OAuthClient> findByClientId(String clientId);
 }

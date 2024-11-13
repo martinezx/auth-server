@@ -10,7 +10,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
-import java.util.UUID;
+
+import static lombok.EqualsAndHashCode.Include;
 
 @Data
 @Builder
@@ -21,7 +22,8 @@ import java.util.UUID;
 public class OAuthClient {
 
     @Id
-    private UUID id;
+    @Include
+    private String id;
     @Column(length = 100)
     private String clientId;
     private Instant clientIdIssuedAt;

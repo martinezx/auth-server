@@ -4,26 +4,26 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.Instant;
-import java.util.UUID;
+
+import static lombok.EqualsAndHashCode.Include;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "oauth2_authorization")
 public class OAuthAuthorization {
 
     @Id
     @Column
-    private UUID id;
-    private UUID registeredClientId;
+    @Include
+    private String id;
+    private String registeredClientId;
     @Column(length = 200)
     private String principalName;
     @Column(length = 100)

@@ -1,7 +1,17 @@
-application:
-  security:
-    oauth:
-      registrar-client-secret: secret
+app:
+  oauth2:
+    client:
+      oidc-client:
+        id: oidc-client
+        secret: secret
+      registrar-client:
+        id: registrar-client
+        secret: secret
+  oidc:
+    user:
+      admin-user:
+        username: admin
+        password: password
 spring:
   datasource:
     url: jdbc:h2:mem:homelab_inventory;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;AUTO_RECONNECT=TRUE;MODE=PostgreSQL

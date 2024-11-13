@@ -9,6 +9,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextHolderStrategy;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.util.Assert;
 import org.xmdf.authserver.domain.Role;
@@ -24,23 +25,25 @@ public class UserService implements UserDetailsManager {
 
     private final UserRepository userRepository;
     private final AuthenticationManager authenticationManager;
+    private final PasswordEncoder passwordEncoder;
     private final SecurityContextHolderStrategy securityContextHolderStrategy;
     private final Map<String, Role> roleCache;
 
-    public UserService(UserRepository userRepository, AuthenticationManager authenticationManager) {
+    public UserService(UserRepository userRepository, AuthenticationManager authenticationManager, PasswordEncoder passwordEncoder) {
         Assert.notNull(userRepository, "userRepository cannot be null");
         Assert.notNull(authenticationManager, "authenticationManager cannot be null");
+        Assert.notNull(passwordEncoder, "passwordEncoder cannot be null");
 
         this.userRepository = userRepository;
         this.authenticationManager = authenticationManager;
+        this.passwordEncoder = passwordEncoder;
         this.securityContextHolderStrategy = SecurityContextHolder
                 .getContextHolderStrategy();
 
         // This cache is safe to use this way as there is no way to create roles in the server,
         // however is not the best way at will cause problems if a role is inserted in the database directly.
         // Would also need to be updated in case the server allowed to manage roles directly.
-        // In case
-        this.roleCache = userRepository.getAllRoles().stream()
+        this.roleCache = userRepository.findAllRoles().stream()
                 .collect(Collectors.toMap(Role::getName, data -> data));
     }
 
@@ -48,7 +51,7 @@ public class UserService implements UserDetailsManager {
     public void createUser(UserDetails user) {
         userRepository.save(User.builder()
                 .username(user.getUsername())
-                .password(user.getPassword())
+                .password(passwordEncoder.encode(user.getPassword()))
                 .enabled(true)
                 .authorities(getEntityRoles(user))
                 .build());
@@ -96,7 +99,7 @@ public class UserService implements UserDetailsManager {
 
     @Override
     public boolean userExists(String username) {
-        return this.userRepository.existsByUsername(username);
+        return userRepository.existsByUsername(username);
     }
 
     @Override
@@ -104,7 +107,11 @@ public class UserService implements UserDetailsManager {
         return getUser(username);
     }
 
-    protected Authentication createNewAuthentication(Authentication currentAuth, String newPassword) {
+    public Role loadRoleByName(String name) {
+        return userRepository.findRoleByName(name).orElse(null);
+    }
+
+    private Authentication createNewAuthentication(Authentication currentAuth, String newPassword) {
         UserDetails user = loadUserByUsername(currentAuth.getName());
         UsernamePasswordAuthenticationToken newAuthentication = UsernamePasswordAuthenticationToken.authenticated(user,
                 null, user.getAuthorities());
@@ -113,7 +120,7 @@ public class UserService implements UserDetailsManager {
     }
 
     private User getUser(String username) {
-        return this.userRepository.findByUsername(username)
+        return userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 
@@ -121,7 +128,7 @@ public class UserService implements UserDetailsManager {
         return details.getAuthorities() == null
                 ? new ArrayList<>()
                 : details.getAuthorities().stream()
-                .map(authority -> this.roleCache.get(authority.getAuthority()))
+                .map(authority -> roleCache.get(authority.getAuthority()))
                 .toList();
     }
 }

@@ -1,7 +1,17 @@
-application:
-  security:
-    oauth:
-      registrar-client-secret: ${REGISTRAR_CLIENT_SECRET}
+app:
+  oauth2:
+    client:
+      oidc-client:
+        id: ${OIDC_CLIENT_ID}
+        secret: ${OIDC_CLIENT_SECRET}
+      registrar-client:
+        id: ${REGISTRAR_CLIENT_ID}
+        secret: ${REGISTRAR_CLIENT_SECRET}
+  oidc:
+    user:
+      admin-user:
+        username: ${ADMIN_USER_USERNAME}
+        password: ${ADMIN_USER_PASSWORD}
 server:
   port: 9000
   forward-headers-strategy: NATIVE
